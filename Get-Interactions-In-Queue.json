@@ -1,0 +1,72 @@
+{
+  "name": "Get Interactions In Queue",
+  "integrationType": "purecloud-data-actions",
+  "actionType": "custom",
+  "config": {
+    "request": {
+      "requestUrlTemplate": "/api/v2/analytics/queues/observations/query",
+      "requestType": "POST",
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "requestTemplate": "{\"filter\": {\"type\":\"and\",\"predicates\": [{\"dimension\": \"queueId\",\"value\": \"${input.QUEUE_ID}\"},{\"dimension\": \"mediaType\",\"value\": \"${input.MEDIA_TYPE}\"}]},\"metrics\": [\"oWaiting\",\"oInteracting\"]}"
+    },
+    "response": {
+      "translationMap": {
+        "NumWaiting": "$..data[?(@.metric==\"oWaiting\")].stats.count",
+        "NumInteracting": "$..data[?(@.metric==\"oInteracting\")].stats.count"
+      },
+      "translationMapDefaults": {},
+      "successTemplate": "{\"NUM_INTERACTING\": ${successTemplateUtils.firstFromArray(\"${NumInteracting}\", \"0\")}, \"NUM_WAITING\": ${successTemplateUtils.firstFromArray(\"${NumWaiting}\", \"0\")}}"
+    }
+  },
+  "contract": {
+    "input": {
+      "inputSchema": {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "type": "object",
+        "required": [
+          "QUEUE_ID",
+          "MEDIA_TYPE"
+        ],
+        "properties": {
+          "QUEUE_ID": {
+            "description": "The queue ID.",
+            "type": "string"
+          },
+          "MEDIA_TYPE": {
+            "description": "The media type of the interaction: voice, chat, callback, email, social media, or video communication.",
+            "type": "string",
+            "enum": [
+              "voice",
+              "chat",
+              "callback",
+              "email",
+              "socialExpression",
+              "videoComm"
+            ]
+          }
+        },
+        "additionalProperties": true
+      }
+    },
+    "output": {
+      "successSchema": {
+        "$schema": "http://json-schema.org/draft-04/schema#",
+        "type": "object",
+        "properties": {
+          "NUM_INTERACTING": {
+            "description": "Interactions in the queue assigned to agents",
+            "type": "number"
+          },
+          "NUM_WAITING": {
+            "description": "Interactions in the queue waiting",
+            "type": "number"
+          }
+        },
+        "additionalProperties": true
+      }
+    }
+  },
+  "secure": false
+}
